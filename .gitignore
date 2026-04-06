@@ -1,0 +1,12 @@
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Node (futuro)
+node_modules/
+
+# Variáveis sensíveis
+.env
+
+# Logs
+*.log
