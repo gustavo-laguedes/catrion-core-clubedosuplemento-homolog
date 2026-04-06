@@ -355,6 +355,30 @@ function mapRemoteEvent(row) {
     noteObj = {};
   }
 
+  const rawNote = String(row?.note || "").trim();
+const isLegacySaleWithoutJson =
+  String(row?.kind || "").toUpperCase() === "SALE" &&
+  rawNote &&
+  rawNote[0] !== "{";
+
+if (isLegacySaleWithoutJson) {
+  return {
+    id: row.id,
+    type: "SALE",
+    at: row.created_at,
+    by: "system",
+    saleId: null,
+    meta: {},
+    note: row.note || null,
+    total: Number(row.amount_cents || 0) / 100,
+    payments: null,
+    costTotal: 0,
+    profit: 0,
+    amount: Number(row.amount_cents || 0) / 100,
+    isLegacyGhost: true
+  };
+}
+
   const typeMap = {
     OPEN: "OPEN",
     CLOSE: "CLOSE",

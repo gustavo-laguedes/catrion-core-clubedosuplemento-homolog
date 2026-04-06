@@ -648,6 +648,8 @@ const events = await getFilteredEvents(core);
 const sanitizedEvents = (events || []).filter(e => {
   if (e?.type !== "SALE") return true;
 
+  if (e?.isLegacyGhost) return false;
+
   const total = Number(
     e?.total ??
     e?.amount ??

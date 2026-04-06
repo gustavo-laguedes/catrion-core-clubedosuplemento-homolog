@@ -1905,7 +1905,7 @@ document.getElementById("btnExportPDF").onclick = () => {
     vdList.querySelectorAll(".r-row").forEach(row=>{
   row.style.cursor = "pointer";
 
-  row.addEventListener("click", ()=>{
+  row.addEventListener("click", async ()=>{
     const nameLine = row.querySelector(".t")?.textContent || "";
     const user = nameLine.split("•").pop().trim(); // pega depois do "1º •"
 

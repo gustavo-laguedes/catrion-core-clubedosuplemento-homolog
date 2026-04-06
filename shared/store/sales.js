@@ -9,7 +9,7 @@
   }
 
   async function requireOpenCashSessionId() {
-  const s = window.CoreCash?.getSession?.();
+  const s = await window.CoreCash?.getSession?.();
 
   // 1) Se existe caixa local aberto, tenta garantir a sessão remota agora
   if (s?.isOpen) {
