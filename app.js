@@ -160,6 +160,30 @@ function can(permissionKey) {
   return !!window.CoreAuth?.can?.(permissionKey);
 }
 
+function isAdminUnlocked() {
+  return localStorage.getItem("core_admin_authorized") === "true";
+}
+
+function canAdminManageUsers() {
+  return isAdminUnlocked() || can("canManageUsers");
+}
+
+function canAdminEditUsers() {
+  return isAdminUnlocked() || can("canEditUsers");
+}
+
+function canAdminBlockUsers() {
+  return isAdminUnlocked() || can("canBlockUsers");
+}
+
+function canAdminDeleteUsers() {
+  return isAdminUnlocked() || can("canDeleteUsers");
+}
+
+function canAdminSendFirstAccess() {
+  return isAdminUnlocked() || can("canSendFirstAccess");
+}
+
 function isDevOrAdmin() {
   const role = getCurrentRole();
   return role === "DEV" || role === "ADMIN";
@@ -172,7 +196,7 @@ function applyGlobalRoleUI() {
   }
 
   if (btnAdminNewUser) {
-    btnAdminNewUser.style.display = can("canManageUsers") ? "" : "none";
+    btnAdminNewUser.style.display = canAdminManageUsers() ? "" : "none";
   }
 }
 
@@ -881,9 +905,10 @@ function confirmAdminAuth() {
     return;
   }
 
-  adminAuthError.classList.add("hidden");
+   adminAuthError.classList.add("hidden");
   localStorage.setItem("core_admin_authorized", "true");
 
+  applyGlobalRoleUI();
   closeAdminAuth();
 
   if (pendingAdminTarget === "system") {
@@ -917,12 +942,13 @@ async function openAdminUsers() {
 
   adminUsersOverlay.classList.remove("core-hidden");
 
-  if (!isDevOrAdmin() && !can("canManageUsers")) {
+  if (!canAdminManageUsers()) {
     setAdminUsersFeedback("Você não tem permissão para gerenciar usuários. Visualização somente leitura.");
   } else {
     setAdminUsersFeedback("");
   }
 
+  applyGlobalRoleUI();
   await loadAdminUsers();
 }
 
@@ -993,8 +1019,8 @@ function renderAdminUsersList(list) {
           </div>
         </div>
 
-        <div class="admin-user-row__actions">
-          ${can("canEditUsers") ? `
+                <div class="admin-user-row__actions">
+          ${canAdminEditUsers() ? `
             <button
               class="admin-action-btn admin-action-btn--edit"
               type="button"
@@ -1005,7 +1031,7 @@ function renderAdminUsersList(list) {
             </button>
           ` : ""}
 
-          ${can("canBlockUsers") ? `
+          ${canAdminBlockUsers() ? `
             <button
               class="admin-action-btn admin-action-btn--warn"
               type="button"
@@ -1016,7 +1042,7 @@ function renderAdminUsersList(list) {
             </button>
           ` : ""}
 
-          ${can("canSendFirstAccess") ? `
+          ${canAdminSendFirstAccess() ? `
             <button
               class="admin-action-btn"
               type="button"
@@ -1027,7 +1053,7 @@ function renderAdminUsersList(list) {
             </button>
           ` : ""}
 
-          ${can("canDeleteUsers") ? `
+          ${canAdminDeleteUsers() ? `
             <button
               class="admin-action-btn admin-action-btn--danger"
               type="button"
