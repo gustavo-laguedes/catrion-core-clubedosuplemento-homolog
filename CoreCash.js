@@ -99,11 +99,18 @@ async function syncEventToSupabase(evt) {
 
     // vamos salvar "by", "notes", "saleId" e "meta" dentro de note (texto)
     const noteObj = {
-      by: evt?.by ?? null,
-      saleId: evt?.saleId ?? null,
-      notes: evt?.meta?.notes ?? "",
-      meta: evt?.meta ?? null
-    };
+  by: evt?.by ?? null,
+  saleId: evt?.saleId ?? null,
+  notes: evt?.meta?.notes ?? "",
+  meta: evt?.meta ?? null,
+
+  // dados completos para reconstruir venda remota
+  total: evt?.total ?? null,
+  payments: evt?.payments ?? null,
+  costTotal: evt?.costTotal ?? null,
+  profit: evt?.profit ?? null,
+  amount: evt?.amount ?? null
+};
 
     await window.CashStore.addEvent({
       sessionId: remoteId,
@@ -357,15 +364,26 @@ function mapRemoteEvent(row) {
   };
 
   return {
-    id: row.id,
-    type: typeMap[String(row.kind || "").toUpperCase()] || String(row.kind || "").toUpperCase(),
-    at: row.created_at,
-    by: noteObj?.by || "system",
-    amount: Number(row.amount_cents || 0) / 100,
-    saleId: noteObj?.saleId || null,
-    meta: noteObj?.meta || {},
-    note: row.note || null
-  };
+  id: row.id,
+  type: typeMap[String(row.kind || "").toUpperCase()] || String(row.kind || "").toUpperCase(),
+  at: row.created_at,
+  by: noteObj?.by || "system",
+
+  // mantém amount genérico
+  amount: noteObj?.amount != null
+    ? Number(noteObj.amount || 0)
+    : Number(row.amount_cents || 0) / 100,
+
+  saleId: noteObj?.saleId || null,
+  meta: noteObj?.meta || {},
+  note: row.note || null,
+
+  // reconstrução completa da venda remota
+  total: noteObj?.total != null ? Number(noteObj.total || 0) : null,
+  payments: noteObj?.payments || null,
+  costTotal: noteObj?.costTotal != null ? Number(noteObj.costTotal || 0) : 0,
+  profit: noteObj?.profit != null ? Number(noteObj.profit || 0) : 0
+};
 }
 
 async function loadRemoteEvents(sessionId) {
