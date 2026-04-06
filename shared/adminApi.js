@@ -11,9 +11,11 @@
     }
 
     return {
-      ...BASE_HEADERS,
-      "x-core-admin-auth": "true"
-    };
+  ...BASE_HEADERS,
+  "x-core-admin-auth": "true",
+  "apikey": window.ENV.SUPABASE_ANON_KEY,
+  "Authorization": `Bearer ${window.ENV.SUPABASE_ANON_KEY}`
+};
   }
 
   async function callFn(name, body = {}) {
