@@ -573,7 +573,13 @@ const u =
   a?.state?.user ||
   null;
 
-const isFunc = (u && typeof u === "object" && u.role === "FUNC");
+const role = String(u?.role || "OPER").toUpperCase();
+const canViewCosts = !!window.CoreAuth?.can?.("canViewProductCosts");
+const canCreateProducts = !!window.CoreAuth?.can?.("canCreateProducts");
+const canEditProducts = !!window.CoreAuth?.can?.("canEditProducts");
+const canDeleteProducts = !!window.CoreAuth?.can?.("canDeleteProducts");
+const canMoveStock = !!window.CoreAuth?.can?.("canMoveStock");
+const isReadOnlyProducts = !canEditProducts && !canCreateProducts && !canMoveStock;
 
 
 
@@ -630,13 +636,13 @@ const isFunc = (u && typeof u === "object" && u.role === "FUNC");
       const costC = Number(p.costCents || 0);
 const profit = profitPct(p.priceCents || 0, costC);
 
-const costStr = isFunc
-  ? "— — —"
-  : (costC ? fmtBRL(costC) : "—");
+const costStr = canViewCosts
+  ? (costC ? fmtBRL(costC) : "—")
+  : "*****";
 
-const profitStr = isFunc
-  ? "— — —"
-  : (profit == null ? "—" : `${profit}%`);
+const profitStr = canViewCosts
+  ? (profit == null ? "—" : `${profit}%`)
+  : "*****";
 
 
       let hintTop = "Sem mínimo";
@@ -725,16 +731,19 @@ if (min > 0) {
     const photoData = document.querySelector("#pv_photoData");
 
     function setReadOnly(ro) {
-      document.querySelectorAll("#dlgProductView .pv-inp").forEach(inp => {
-        inp.disabled = ro;
-        inp.classList.toggle("pv-ro", ro);
-      });
+  const allowEdit = !!window.CoreAuth?.can?.("canEditProducts");
+  const allowDelete = !!window.CoreAuth?.can?.("canDeleteProducts");
 
-      if (btnSave) btnSave.hidden = ro;
-      if (btnDelete) btnDelete.hidden = ro;
-      if (btnEdit) btnEdit.hidden = !ro;
-      if (btnClose) btnClose.textContent = ro ? "Fechar" : "Cancelar";
-    }
+  document.querySelectorAll("#dlgProductView .pv-inp").forEach(inp => {
+    inp.disabled = ro || !allowEdit;
+    inp.classList.toggle("pv-ro", ro || !allowEdit);
+  });
+
+  if (btnSave) btnSave.hidden = ro || !allowEdit;
+  if (btnDelete) btnDelete.hidden = !allowDelete;
+  if (btnEdit) btnEdit.hidden = !ro || !allowEdit;
+  if (btnClose) btnClose.textContent = ro ? "Fechar" : "Cancelar";
+}
 
     if (photoPick && photoFile) {
       photoPick.addEventListener("click", () => {
@@ -760,6 +769,10 @@ if (min > 0) {
     if (btnDelete) {
       btnDelete.addEventListener("click", () => {
         const id = document.querySelector("#pv_id")?.value;
+                if (!window.CoreAuth?.can?.("canDeleteProducts")) {
+          alert("Você não tem permissão para excluir produtos.");
+          return;
+        }
         if (!id) return;
 
         const ok = confirm("Tem certeza que deseja excluir este produto? Essa ação não pode ser desfeita.");
@@ -785,6 +798,8 @@ if (min > 0) {
     alert("Erro ao excluir no banco. Veja o console.");
   }
 })();
+
+
       });
     }
 
@@ -792,6 +807,10 @@ if (min > 0) {
 
     frm.addEventListener("submit", (ev) => {
       ev.preventDefault();
+            if (!window.CoreAuth?.can?.("canEditProducts")) {
+        alert("Você não tem permissão para editar produtos.");
+        return;
+      }
 
       if (ev.submitter && ev.submitter.value === "cancel") {
         dlg.close();
@@ -1068,6 +1087,10 @@ refreshNewName();
 
     frmProduct.addEventListener("submit", (ev) => {
       ev.preventDefault();
+            if (!window.CoreAuth?.can?.("canCreateProducts")) {
+        alert("Você não tem permissão para cadastrar produtos.");
+        return;
+      }
 
       if (ev.submitter && ev.submitter.value === "cancel") {
         dlgProduct.close();
@@ -1549,7 +1572,10 @@ const name = joinNameFromParts([cat, sub1, sub2, sub3]);
 
     frm.addEventListener("submit", async (ev) => {
       ev.preventDefault();
-
+      if (!window.CoreAuth?.can?.("canMoveStock")) {
+        alert("Você não tem permissão para movimentar estoque.");
+        return;
+      }
       if (ev.submitter && ev.submitter.value === "cancel") {
         dlg.close();
         return;
@@ -1782,6 +1808,9 @@ return;
     const dlgProduct = document.querySelector("#dlgProduct");
     const dlgMove = document.querySelector("#dlgMove");
 
+    const canCreateProducts = !!window.CoreAuth?.can?.("canCreateProducts");
+const canMoveStock = !!window.CoreAuth?.can?.("canMoveStock");
+
     if (!btnNewProduct || !dlgProduct || !btnNewMovement || !dlgMove) {
       console.warn("[Produtos] Elementos não encontrados. Verifique IDs no HTML.");
       return;
@@ -1795,6 +1824,16 @@ return;
     bindFilters();
     bindSortHeaders();
 
+    if (btnNewProduct) {
+  btnNewProduct.disabled = !canCreateProducts;
+  btnNewProduct.classList.toggle("is-disabled", !canCreateProducts);
+}
+
+if (btnNewMovement) {
+  btnNewMovement.disabled = !canMoveStock;
+  btnNewMovement.classList.toggle("is-disabled", !canMoveStock);
+}
+
     (async () => {
   try {
     const list = await window.ProductsStore.list({ limit: 1000 });
@@ -1806,11 +1845,22 @@ setProducts(list);
   }
 })();
 
-    btnNewProduct.onclick = () => dlgProduct.showModal();
+    btnNewProduct.onclick = () => {
+  if (!window.CoreAuth?.can?.("canCreateProducts")) {
+    alert("Você não tem permissão para cadastrar produtos.");
+    return;
+  }
+  dlgProduct.showModal();
+};
 
     btnNewMovement.onclick = () => {
-      openMoveModal();
-      dlgMove.showModal();
-    };
+  if (!window.CoreAuth?.can?.("canMoveStock")) {
+    alert("Você não tem permissão para movimentar estoque.");
+    return;
+  }
+
+  openMoveModal();
+  dlgMove.showModal();
+};
   };
 })();

@@ -254,7 +254,167 @@
     return t;
   }
 
+    const rolePermissions = {
+    DEV: {
+      canManageUsers: true,
+      canEditUsers: true,
+      canDeleteUsers: true,
+      canBlockUsers: true,
+      canSendFirstAccess: true,
+
+      canViewReports: true,
+      canExportReports: true,
+
+      canCreateProducts: true,
+      canEditProducts: true,
+      canDeleteProducts: true,
+      canMoveStock: true,
+      canViewProductCosts: true,
+
+      canOpenCash: true,
+      canCloseCash: true,
+      canSupplyCash: true,
+      canWithdrawCash: true,
+      canCancelCashEvent: true,
+      canViewCashProfit: true,
+
+      canCompleteSale: true,
+      canSaveCoupon: true,
+      canDeleteCoupon: true
+    },
+
+    ADMIN: {
+      canManageUsers: true,
+      canEditUsers: true,
+      canDeleteUsers: true,
+      canBlockUsers: true,
+      canSendFirstAccess: true,
+
+      canViewReports: true,
+      canExportReports: true,
+
+      canCreateProducts: true,
+      canEditProducts: true,
+      canDeleteProducts: true,
+      canMoveStock: true,
+      canViewProductCosts: true,
+
+      canOpenCash: true,
+      canCloseCash: true,
+      canSupplyCash: true,
+      canWithdrawCash: true,
+      canCancelCashEvent: true,
+      canViewCashProfit: true,
+
+      canCompleteSale: true,
+      canSaveCoupon: true,
+      canDeleteCoupon: true
+    },
+
+    ASSOP: {
+      canManageUsers: false,
+      canEditUsers: false,
+      canDeleteUsers: false,
+      canBlockUsers: false,
+      canSendFirstAccess: false,
+
+      canViewReports: false,
+      canExportReports: false,
+
+      canCreateProducts: true,
+      canEditProducts: true,
+      canDeleteProducts: true,
+      canMoveStock: true,
+      canViewProductCosts: true,
+
+      canOpenCash: true,
+      canCloseCash: true,
+      canSupplyCash: true,
+      canWithdrawCash: true,
+      canCancelCashEvent: true,
+      canViewCashProfit: true,
+
+      canCompleteSale: true,
+      canSaveCoupon: true,
+      canDeleteCoupon: true
+    },
+
+    OPER: {
+      canManageUsers: false,
+      canEditUsers: false,
+      canDeleteUsers: false,
+      canBlockUsers: false,
+      canSendFirstAccess: false,
+
+      canViewReports: false,
+      canExportReports: false,
+
+      canCreateProducts: false,
+      canEditProducts: false,
+      canDeleteProducts: false,
+      canMoveStock: false,
+      canViewProductCosts: false,
+
+      canOpenCash: true,
+      canCloseCash: true,
+      canSupplyCash: false,
+      canWithdrawCash: false,
+      canCancelCashEvent: false,
+      canViewCashProfit: false,
+
+      canCompleteSale: true,
+      canSaveCoupon: true,
+      canDeleteCoupon: false
+    },
+
+    VISU: {
+      canManageUsers: false,
+      canEditUsers: false,
+      canDeleteUsers: false,
+      canBlockUsers: false,
+      canSendFirstAccess: false,
+
+      canViewReports: true,
+      canExportReports: true,
+
+      canCreateProducts: false,
+      canEditProducts: false,
+      canDeleteProducts: false,
+      canMoveStock: false,
+      canViewProductCosts: false,
+
+      canOpenCash: false,
+      canCloseCash: false,
+      canSupplyCash: false,
+      canWithdrawCash: false,
+      canCancelCashEvent: false,
+      canViewCashProfit: false,
+
+      canCompleteSale: false,
+      canSaveCoupon: false,
+      canDeleteCoupon: false
+    }
+  };
+
+  function getPermissions(role) {
+    const normalized = normalizeRole(role);
+    return rolePermissions[normalized] || rolePermissions.OPER;
+  }
+
+  function can(permissionKey) {
+    const s = getCachedSession();
+    if (!s) return false;
+
+    const perms = getPermissions(s.role);
+    return !!perms[permissionKey];
+  }
+
   window.CoreAuth = {
+        getPermissions: () => {
+      const s = getCachedSession();
+      return getPermissions(s?.role || "OPER");
+    },
+    can,
     login,
     logout,
     bootstrap,

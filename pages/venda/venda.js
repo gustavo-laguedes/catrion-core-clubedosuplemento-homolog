@@ -3,6 +3,14 @@ window.CorePageModules.venda = function () {
 
   const $ = (id) => document.getElementById(id);
 
+  const currentUser = window.CoreAuth?.getCurrentUser?.() || null;
+  const currentRole = String(currentUser?.role || "OPER").toUpperCase();
+
+  const canCompleteSale = !!window.CoreAuth?.can?.("canCompleteSale");
+  const canSaveCoupon = !!window.CoreAuth?.can?.("canSaveCoupon");
+  const canDeleteCoupon = !!window.CoreAuth?.can?.("canDeleteCoupon");
+
+
   const searchInput     = $("searchInput");
   const btnScan         = $("btnScan");
   const resultsEl       = $("searchResults");
@@ -1459,6 +1467,10 @@ closeDiscount();
   couponSavedList.querySelectorAll("[data-coupon-del]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const id = btn.getAttribute("data-coupon-del");
+            if (!canDeleteCoupon) {
+        alert("Você não tem permissão para excluir cupons.");
+        return;
+      }
       if (!id) return;
 
       const ok = confirm("Deseja realmente excluir este cupom?");
@@ -1910,6 +1922,10 @@ if (!pid) continue;
 
 
     async function confirmPay(){
+        if (!canCompleteSale) {
+    alert("Você não tem permissão para concluir vendas.");
+    return;
+  }
     const t = total();
     if (t <= 0) return;
 
@@ -2350,7 +2366,14 @@ btnPayConfirm.disabled = false;
   });
 
   btnDiscount?.addEventListener("click", openDiscount);
-  btnCheckout?.addEventListener("click", openPay);
+
+btnCheckout?.addEventListener("click", () => {
+  if (!canCompleteSale) {
+    alert("Você não tem permissão para concluir vendas.");
+    return;
+  }
+  openPay();
+});
 
   // modal desconto
   btnDiscountCancel?.addEventListener("click", closeDiscount);
@@ -2368,6 +2391,10 @@ couponSearch?.addEventListener("input", () => {
 });
 
 btnCouponSave?.addEventListener("click", async () => {
+    if (!canSaveCoupon) {
+    alert("Você não tem permissão para salvar cupons.");
+    return;
+  }
   const code = String(discountReason.value || "").trim();
   const kind = discountType.value;
   const value = Number(String(discountInput.value || "0").replace(",", "."));

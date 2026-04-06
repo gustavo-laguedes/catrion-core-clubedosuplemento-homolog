@@ -5,15 +5,15 @@
   document.body.classList.add("cash-scroll-lock");
 
   const user = window.CoreAuth?.getCurrentUser?.();
-const isFunc = (user?.role || "FUNC") === "FUNC";
+const role = String(user?.role || "OPER").toUpperCase();
+const canViewCashProfit = !!window.CoreAuth?.can?.("canViewCashProfit");
+const canOpenCash = !!window.CoreAuth?.can?.("canOpenCash");
+const canCloseCash = !!window.CoreAuth?.can?.("canCloseCash");
+const canSupplyCash = !!window.CoreAuth?.can?.("canSupplyCash");
+const canWithdrawCash = !!window.CoreAuth?.can?.("canWithdrawCash");
+const canCancelCashEvent = !!window.CoreAuth?.can?.("canCancelCashEvent");
 
-if (isFunc) {
-  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-  setTxt("profitValue", "— — —");
-  setTxt("profitPct", "— — —");
-  setTxt("profitHint", "— — —");
-}
 
 
   // cleanup básico (se recarregar)
@@ -93,11 +93,16 @@ const $adminPasswordActions = el("adminPasswordActions");
   const ADMIN_PASSWORD = "adminconfig00"; // ✅ senha do admin
 
   const moneyOrMask = (v) =>
-  isFunc
-    ? "— — —"
-    : Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  canViewCashProfit
+    ? Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : "*****";
 
-
+function applyCashPermissionsUI() {
+  if ($btnOpen) $btnOpen.disabled = !canOpenCash;
+  if ($btnClose) $btnClose.disabled = !canCloseCash;
+  if ($btnSupply) $btnSupply.disabled = !canSupplyCash;
+  if ($btnWithdraw) $btnWithdraw.disabled = !canWithdrawCash;
+}
   
 
 
@@ -266,17 +271,7 @@ async function syncCancelledSaleToSupabase(evt) {
     const e = eventSale;
     const meta = e.meta || {};
     const isCancelled = !!e.cancelledAt;
-    const a = window.CoreAuth;
-const u =
-  a?.getCurrentUser?.() ||
-  a?.getUser?.() ||
-  a?.currentUser ||
-  a?.user ||
-  a?.session?.user ||
-  a?.state?.user ||
-  null;
-
-const isFunc = (u && typeof u === "object" && u.role === "FUNC");
+    const canSeeSaleCosts = !!window.CoreAuth?.can?.("canViewCashProfit");
 
     const cust = meta.customer || null;
     const discounts = meta.discounts || [];
@@ -375,12 +370,12 @@ if (cd  > 0) payLines.push(`<div>Débito: <b>${money(cd)}</b></div>`);
 const opCosts = meta.operationalCosts || [];
 const opTotal = Number(meta.cardFeeTotal || 0);
 
-const opHtml = isFunc
+const opHtml = !canSeeSaleCosts
   ? `
     <div class="sale-box">
       <div style="font-weight:900;margin-bottom:6px;">Custos operacionais</div>
-      <div>• — — —</div>
-      <div style="margin-top:10px;">Total: <b>— — —</b></div>
+      <div>• *****</div>
+      <div style="margin-top:10px;">Total: <b>*****</b></div>
     </div>
   `
   : `
@@ -497,6 +492,8 @@ $saleViewBackdrop.classList.remove("hidden");
     if ($btnWithdraw) $btnWithdraw.disabled = !!disabled;
   }
 
+  applyCashPermissionsUI();
+
   // proteção CoreCash
   if (!window.CoreCash) {
     console.error("CoreCash não carregou. Inclua <script src='CoreCash.js'></script> no index.html (antes do app.js).");
@@ -506,6 +503,25 @@ $saleViewBackdrop.classList.remove("hidden");
 
   function openModal(mode) {
     if (!window.CoreCash) return;
+    if (mode === "OPEN" && !canOpenCash) {
+  alert("Você não tem permissão para abrir caixa.");
+  return;
+}
+
+if (mode === "CLOSE" && !canCloseCash) {
+  alert("Você não tem permissão para fechar caixa.");
+  return;
+}
+
+if (mode === "SUPPLY" && !canSupplyCash) {
+  alert("Você não tem permissão para fazer suprimento.");
+  return;
+}
+
+if (mode === "WITHDRAW" && !canWithdrawCash) {
+  alert("Você não tem permissão para fazer sangria.");
+  return;
+}
     modalMode = mode;
     $mValue.value = "";
     $mNotes.value = "";
@@ -641,24 +657,13 @@ modalValueLocked = false;
       `Suprimento: ${moneyBR(summary.suppliesCash || 0)} • ` +
       `Sangria: ${moneyBR(summary.withdrawsCash || 0)}`;
 
-      const a = window.CoreAuth;
-const u =
-  a?.getCurrentUser?.() ||
-  a?.getUser?.() ||
-  a?.currentUser ||
-  a?.user ||
-  a?.session?.user ||
-  a?.state?.user ||
-  null;
+      const canSeeSaleCosts = !!window.CoreAuth?.can?.("canViewCashProfit");
 
-const isFunc = (u && typeof u === "object" && u.role === "FUNC");
-
-
-    // lucro
-if (isFunc) {
-  $profitValue.textContent = "— — —";
-  $profitPct.textContent = "— — —";
-  $profitHint.textContent = "— — —";
+// lucro
+if (!canSeeSaleCosts) {
+  $profitValue.textContent = "*****";
+  $profitPct.textContent = "*****";
+  $profitHint.textContent = "*****";
 } else {
   $profitValue.textContent = moneyBR(summary.profitTotal || 0);
   $profitPct.textContent = `${Number(summary.profitPct || 0).toFixed(1)}%`;

@@ -32,6 +32,7 @@ window.coreRouterInstance = router;
   };
 
   updateUserUI(mergedUser);
+    applyGlobalRoleUI();
 
   setActiveSidebar("home");
   router.render("home");
@@ -149,6 +150,31 @@ const btnNewMachine = document.getElementById("btnNewMachine");
 const saveMachineBtn = document.getElementById("saveMachine");
 const machineNameInput = document.getElementById("machineName");
 const machinesList = document.getElementById("machineList");
+
+
+function getCurrentRole() {
+  return window.CoreAuth?.getCurrentUser?.()?.role || "OPER";
+}
+
+function can(permissionKey) {
+  return !!window.CoreAuth?.can?.(permissionKey);
+}
+
+function isDevOrAdmin() {
+  const role = getCurrentRole();
+  return role === "DEV" || role === "ADMIN";
+}
+
+function applyGlobalRoleUI() {
+  const configBtn = document.querySelector('.sidebar-link-secondary');
+  if (configBtn) {
+    configBtn.style.display = isDevOrAdmin() ? "" : "none";
+  }
+
+  if (btnAdminNewUser) {
+    btnAdminNewUser.style.display = can("canManageUsers") ? "" : "none";
+  }
+}
 
 
 /* =========================
@@ -888,7 +914,15 @@ function closeSystemConfig() {
 
 async function openAdminUsers() {
   if (!adminUsersOverlay) return;
+
   adminUsersOverlay.classList.remove("core-hidden");
+
+  if (!isDevOrAdmin() && !can("canManageUsers")) {
+    setAdminUsersFeedback("Você não tem permissão para gerenciar usuários. Visualização somente leitura.");
+  } else {
+    setAdminUsersFeedback("");
+  }
+
   await loadAdminUsers();
 }
 
@@ -960,46 +994,56 @@ function renderAdminUsersList(list) {
         </div>
 
         <div class="admin-user-row__actions">
-  <button
-    class="admin-action-btn admin-action-btn--edit"
-    type="button"
-    data-action="edit"
-    data-user-id="${user.id}"
-  >
-    Editar
-  </button>
+          ${can("canEditUsers") ? `
+            <button
+              class="admin-action-btn admin-action-btn--edit"
+              type="button"
+              data-action="edit"
+              data-user-id="${user.id}"
+            >
+              Editar
+            </button>
+          ` : ""}
 
-  <button
-    class="admin-action-btn admin-action-btn--warn"
-    type="button"
-    data-action="toggle-status"
-    data-user-id="${user.id}"
-  >
-    ${status === "blocked" ? "Desbloquear" : "Bloquear"}
-  </button>
+          ${can("canBlockUsers") ? `
+            <button
+              class="admin-action-btn admin-action-btn--warn"
+              type="button"
+              data-action="toggle-status"
+              data-user-id="${user.id}"
+            >
+              ${status === "blocked" ? "Desbloquear" : "Bloquear"}
+            </button>
+          ` : ""}
 
-  <button
-    class="admin-action-btn"
-    type="button"
-    data-action="first-access"
-    data-user-id="${user.id}"
-  >
-    Primeiro acesso
-  </button>
+          ${can("canSendFirstAccess") ? `
+            <button
+              class="admin-action-btn"
+              type="button"
+              data-action="first-access"
+              data-user-id="${user.id}"
+            >
+              Primeiro acesso
+            </button>
+          ` : ""}
 
-  <button
-    class="admin-action-btn admin-action-btn--danger"
-    type="button"
-    data-action="delete"
-    data-user-id="${user.id}"
-  >
-    Excluir
-  </button>
-</div>
+          ${can("canDeleteUsers") ? `
+            <button
+              class="admin-action-btn admin-action-btn--danger"
+              type="button"
+              data-action="delete"
+              data-user-id="${user.id}"
+            >
+              Excluir
+            </button>
+          ` : ""}
+        </div>
       </div>
     `;
   }).join("");
 }
+
+
 
 async function loadAdminUsers() {
   if (!window.AdminApi?.listUsers) {
