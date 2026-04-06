@@ -92,6 +92,21 @@ const adminUsersFeedback = document.getElementById("adminUsersFeedback");
 const adminUsersSearch = document.getElementById("adminUsersSearch");
 const btnAdminNewUser = document.getElementById("btnAdminNewUser");
 
+const adminUserFormOverlay = document.getElementById("adminUserFormOverlay");
+const adminUserFormTitle = document.getElementById("adminUserFormTitle");
+const adminUserFormSubtitle = document.getElementById("adminUserFormSubtitle");
+const btnAdminUserFormClose = document.getElementById("btnAdminUserFormClose");
+const btnAdminUserFormCancel = document.getElementById("btnAdminUserFormCancel");
+const btnAdminUserFormSave = document.getElementById("btnAdminUserFormSave");
+const btnAdminUserSendReset = document.getElementById("btnAdminUserSendReset");
+const adminUserFormFeedback = document.getElementById("adminUserFormFeedback");
+
+const adminUserId = document.getElementById("adminUserId");
+const adminUserEmail = document.getElementById("adminUserEmail");
+
+const adminUserRole = document.getElementById("adminUserRole");
+
+
 const configMachines = document.getElementById("machinesSection");
 
 // machines
@@ -911,11 +926,42 @@ function renderAdminUsersList(list) {
         </div>
 
         <div class="admin-user-row__actions">
-          <button class="admin-action-btn" type="button">Editar</button>
-          <button class="admin-action-btn" type="button">${status === "blocked" ? "Desbloquear" : "Bloquear"}</button>
-          <button class="admin-action-btn" type="button">Reset senha</button>
-          <button class="admin-action-btn" type="button">Excluir</button>
-        </div>
+  <button
+    class="admin-action-btn admin-action-btn--edit"
+    type="button"
+    data-action="edit"
+    data-user-id="${user.id}"
+  >
+    Editar
+  </button>
+
+  <button
+    class="admin-action-btn admin-action-btn--warn"
+    type="button"
+    data-action="toggle-status"
+    data-user-id="${user.id}"
+  >
+    ${status === "blocked" ? "Desbloquear" : "Bloquear"}
+  </button>
+
+  <button
+    class="admin-action-btn"
+    type="button"
+    data-action="first-access"
+    data-user-id="${user.id}"
+  >
+    Primeiro acesso
+  </button>
+
+  <button
+    class="admin-action-btn admin-action-btn--danger"
+    type="button"
+    data-action="delete"
+    data-user-id="${user.id}"
+  >
+    Excluir
+  </button>
+</div>
       </div>
     `;
   }).join("");
@@ -942,6 +988,108 @@ async function loadAdminUsers() {
     setAdminUsersFeedback(err?.message || "Não foi possível carregar os usuários.");
   } finally {
     if (adminUsersLoading) adminUsersLoading.classList.add("hidden");
+  }
+}
+
+function setAdminUserFormFeedback(message = "", type = "error") {
+  if (!adminUserFormFeedback) return;
+
+  if (!message) {
+    adminUserFormFeedback.textContent = "";
+    adminUserFormFeedback.className = "hidden";
+    return;
+  }
+
+  adminUserFormFeedback.textContent = message;
+  adminUserFormFeedback.className = `admin-users-feedback admin-users-feedback--${type}`;
+}
+
+function clearAdminUserForm() {
+  if (adminUserId) adminUserId.value = "";
+  if (adminUserEmail) adminUserEmail.value = "";
+  if (adminUserRole) adminUserRole.value = "OPER";
+
+  setAdminUserFormFeedback("");
+
+  if (btnAdminUserSendReset) {
+    btnAdminUserSendReset.style.display = "none";
+  }
+}
+
+function openAdminUserCreateForm() {
+  clearAdminUserForm();
+
+  if (adminUserFormTitle) adminUserFormTitle.textContent = "Novo usuário";
+  if (adminUserFormSubtitle) adminUserFormSubtitle.textContent = "Criar usuário e enviar primeiro acesso";
+
+  if (adminUserEmail) adminUserEmail.disabled = false;
+
+  if (adminUserFormOverlay) {
+    adminUserFormOverlay.classList.remove("core-hidden");
+  }
+}
+
+function closeAdminUserForm() {
+  if (!adminUserFormOverlay) return;
+  adminUserFormOverlay.classList.add("core-hidden");
+}
+
+async function saveAdminUser() {
+  if (!window.AdminApi?.createUser) {
+    setAdminUserFormFeedback("AdminApi não carregada.");
+    return;
+  }
+
+  const email = String(adminUserEmail?.value || "").trim().toLowerCase();
+  const role = String(adminUserRole?.value || "").trim().toUpperCase();
+
+  if (!email) {
+    setAdminUserFormFeedback("Digite o e-mail do usuário.");
+    return;
+  }
+
+  if (!role) {
+    setAdminUserFormFeedback("Selecione o papel do usuário.");
+    return;
+  }
+
+  try {
+    setAdminUserFormFeedback("");
+    if (btnAdminUserFormSave) {
+      btnAdminUserFormSave.disabled = true;
+      btnAdminUserFormSave.textContent = "Salvando...";
+    }
+
+    await window.AdminApi.createUser({ email, role });
+
+    closeAdminUserForm();
+    await loadAdminUsers();
+
+    setAdminUsersFeedback("Usuário criado e e-mail de primeiro acesso enviado.", "success");
+  } catch (err) {
+    console.error("[ADMIN USERS] erro ao criar usuário:", err);
+    setAdminUserFormFeedback(err?.message || "Não foi possível criar o usuário.");
+  } finally {
+    if (btnAdminUserFormSave) {
+      btnAdminUserFormSave.disabled = false;
+      btnAdminUserFormSave.textContent = "Salvar";
+    }
+  }
+}
+
+async function sendAdminFirstAccess(userId) {
+  if (!window.AdminApi?.sendFirstAccess) {
+    setAdminUsersFeedback("AdminApi não carregada.");
+    return;
+  }
+
+  try {
+    setAdminUsersFeedback("");
+    await window.AdminApi.sendFirstAccess({ user_id: userId });
+    setAdminUsersFeedback("E-mail de primeiro acesso enviado com sucesso.", "success");
+  } catch (err) {
+    console.error("[ADMIN USERS] erro ao enviar primeiro acesso:", err);
+    setAdminUsersFeedback(err?.message || "Não foi possível enviar o primeiro acesso.");
   }
 }
 
@@ -972,8 +1120,43 @@ if (adminUsersSearch) {
 }
 
 if (btnAdminNewUser) {
-  btnAdminNewUser.addEventListener("click", () => {
-    alert("Próximo passo: criar modal de novo usuário + function admin-create-user.");
+  btnAdminNewUser.addEventListener("click", openAdminUserCreateForm);
+}
+
+if (btnAdminUserFormClose) {
+  btnAdminUserFormClose.addEventListener("click", closeAdminUserForm);
+}
+
+if (btnAdminUserFormCancel) {
+  btnAdminUserFormCancel.addEventListener("click", closeAdminUserForm);
+}
+
+if (adminUserFormOverlay) {
+  adminUserFormOverlay.addEventListener("click", (e) => {
+    if (e.target === adminUserFormOverlay) {
+      closeAdminUserForm();
+    }
+  });
+}
+
+if (btnAdminUserFormSave) {
+  btnAdminUserFormSave.addEventListener("click", saveAdminUser);
+}
+
+if (adminUsersList) {
+  adminUsersList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const userId = btn.dataset.userId;
+
+    if (!action || !userId) return;
+
+    if (action === "first-access") {
+      await sendAdminFirstAccess(userId);
+      return;
+    }
   });
 }
 

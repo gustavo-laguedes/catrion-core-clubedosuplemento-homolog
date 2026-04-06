@@ -193,37 +193,24 @@
       <button id="btnAdminUserFormClose" class="icon-btn" type="button" aria-label="Fechar">✕</button>
     </div>
 
-    <div class="admin-user-form-grid">
-      <input type="hidden" id="adminUserId">
+    <div class="admin-user-form-grid admin-user-form-grid--create">
+  <input type="hidden" id="adminUserId">
 
-      <div class="admin-form-field">
-        <label for="adminUserEmail">E-mail</label>
-        <input id="adminUserEmail" type="email" placeholder="Digite o e-mail">
-      </div>
+  <div class="admin-form-field">
+    <label for="adminUserEmail">E-mail</label>
+    <input id="adminUserEmail" type="email" placeholder="Digite o e-mail do usuário">
+  </div>
 
-      <div class="admin-form-field">
-        <label for="adminUserFullName">Nome completo</label>
-        <input id="adminUserFullName" type="text" placeholder="Digite o nome completo">
-      </div>
-
-      <div class="admin-form-field">
-        <label for="adminUserRole">Papel</label>
-        <select id="adminUserRole">
-          <option value="ADMIN">Administrador</option>
-          <option value="ASSOP">Assistente Operacional</option>
-          <option value="OPER">Operador</option>
-          <option value="VISU">Visualizador</option>
-        </select>
-      </div>
-
-      <div class="admin-form-field">
-        <label for="adminUserStatus">Status</label>
-        <select id="adminUserStatus">
-          <option value="active">Ativo</option>
-          <option value="blocked">Bloqueado</option>
-        </select>
-      </div>
-    </div>
+  <div class="admin-form-field">
+    <label for="adminUserRole">Papel</label>
+    <select id="adminUserRole">
+      <option value="ADMIN">Administrador</option>
+      <option value="ASSOP">Assistente Operacional</option>
+      <option value="OPER" selected>Operador</option>
+      <option value="VISU">Visualizador</option>
+    </select>
+  </div>
+</div>
 
     <div id="adminUserFormFeedback" class="hidden"></div>
 

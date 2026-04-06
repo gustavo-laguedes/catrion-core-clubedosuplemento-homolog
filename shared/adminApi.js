@@ -63,11 +63,16 @@
     return callFn("admin-send-reset", { email });
   }
 
+  async function sendFirstAccess({ user_id }) {
+  return callFn("admin-send-first-access", { user_id });
+}
+
   window.AdminApi = {
-    listUsers,
-    createUser,
-    updateUser,
-    deleteUser,
-    sendReset
-  };
+  listUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  sendReset,
+  sendFirstAccess
+};
 })();
