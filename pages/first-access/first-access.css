@@ -259,3 +259,11 @@
     min-height:54px;
   }
 }
+
+.fa-card * {
+  box-sizing: border-box;
+}
+
+.fa-page {
+  overflow-x: hidden;
+}

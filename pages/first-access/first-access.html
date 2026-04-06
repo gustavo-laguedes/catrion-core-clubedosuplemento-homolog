@@ -8,52 +8,60 @@
 </head>
 <body>
   <div class="fa-page">
-    <div class="fa-head">
-  <img src="../../assets/core-topbar1.png" alt="Core" class="fa-logo">
-  <h1>Primeiro acesso</h1>
-  <p>Finalize seu cadastro para entrar no sistema</p>
-</div>
+    <div class="fa-card">
 
-<div class="fa-top">
-  <div class="fa-avatar-block">
-    <div id="faAvatarPreview" class="fa-avatar-preview">IMG</div>
-    <input id="faAvatarFile" type="file" accept="image/*" hidden>
-    <button id="faAvatarPick" type="button" class="fa-btn fa-btn-ghost fa-btn-avatar">Escolher foto</button>
-  </div>
+      <div class="fa-head">
+        <img src="../../assets/core-topbar1.png" alt="Core" class="fa-logo">
+        <h1>Primeiro acesso</h1>
+        <p>Finalize seu cadastro para entrar no sistema</p>
+      </div>
 
-  <div class="fa-intro-card">
-    <div class="fa-intro-title">Complete seu cadastro</div>
-    <div class="fa-intro-text">
-      Defina seu nome, sua senha de acesso e, se quiser, já adicione uma foto de perfil.
+      <div class="fa-top">
+        <div class="fa-avatar-block">
+          <div id="faAvatarPreview" class="fa-avatar-preview">IMG</div>
+          <input id="faAvatarFile" type="file" accept="image/*" hidden>
+          <button id="faAvatarPick" type="button" class="fa-btn fa-btn-ghost fa-btn-avatar">
+            Escolher foto
+          </button>
+        </div>
+
+        <div class="fa-intro-card">
+          <div class="fa-intro-title">Complete seu cadastro</div>
+          <div class="fa-intro-text">
+            Defina seu nome, sua senha de acesso e, se quiser, já adicione uma foto de perfil.
+          </div>
+        </div>
+      </div>
+
+      <div class="fa-grid">
+        <div class="fa-field fa-field-full">
+          <label>Nome completo</label>
+          <input id="faFullName" type="text" placeholder="Digite seu nome completo">
+        </div>
+
+        <div class="fa-field fa-field-full">
+          <label>E-mail</label>
+          <input id="faEmail" type="email" readonly>
+        </div>
+
+        <div class="fa-field">
+          <label>Senha</label>
+          <input id="faPassword" type="password" placeholder="Digite sua nova senha">
+        </div>
+
+        <div class="fa-field">
+          <label>Confirmar senha</label>
+          <input id="faPasswordConfirm" type="password" placeholder="Confirme sua senha">
+        </div>
+      </div>
+
+      <div id="faFeedback" class="hidden"></div>
+
+      <button id="faSave" class="fa-btn fa-btn-primary fa-btn-save">
+        Salvar e continuar
+      </button>
+
     </div>
-  </div>
-</div>
-
-<div class="fa-grid">
-  <div class="fa-field fa-field-full">
-    <label for="faFullName">Nome completo</label>
-    <input id="faFullName" type="text" placeholder="Digite seu nome completo">
-  </div>
-
-  <div class="fa-field fa-field-full">
-    <label for="faEmail">E-mail</label>
-    <input id="faEmail" type="email" readonly>
-  </div>
-
-  <div class="fa-field">
-    <label for="faPassword">Senha</label>
-    <input id="faPassword" type="password" placeholder="Digite sua nova senha">
-  </div>
-
-  <div class="fa-field">
-    <label for="faPasswordConfirm">Confirmar senha</label>
-    <input id="faPasswordConfirm" type="password" placeholder="Confirme sua senha">
-  </div>
-</div>
-
-<div id="faFeedback" class="hidden"></div>
-
-<button id="faSave" type="button" class="fa-btn fa-btn-primary fa-btn-save">Salvar e continuar</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
