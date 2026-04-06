@@ -1083,13 +1083,38 @@ async function sendAdminFirstAccess(userId) {
     return;
   }
 
+  const actionBtn = adminUsersList?.querySelector(
+    `[data-action="first-access"][data-user-id="${userId}"]`
+  );
+
   try {
     setAdminUsersFeedback("");
+
+    if (actionBtn) {
+      actionBtn.disabled = true;
+      actionBtn.textContent = "Enviando...";
+    }
+
     await window.AdminApi.sendFirstAccess({ user_id: userId });
     setAdminUsersFeedback("E-mail de primeiro acesso enviado com sucesso.", "success");
   } catch (err) {
     console.error("[ADMIN USERS] erro ao enviar primeiro acesso:", err);
-    setAdminUsersFeedback(err?.message || "Não foi possível enviar o primeiro acesso.");
+
+    const message = String(err?.message || "");
+
+    if (message.toLowerCase().includes("rate limit")) {
+      setAdminUsersFeedback(
+        "Muitas tentativas de envio em pouco tempo. Aguarde alguns minutos antes de tentar novamente."
+      );
+      return;
+    }
+
+    setAdminUsersFeedback(message || "Não foi possível enviar o primeiro acesso.");
+  } finally {
+    if (actionBtn) {
+      actionBtn.disabled = false;
+      actionBtn.textContent = "Primeiro acesso";
+    }
   }
 }
 
