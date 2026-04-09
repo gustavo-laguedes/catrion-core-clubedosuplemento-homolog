@@ -14,11 +14,12 @@
     }
 
     const roleLabelMap = {
-      DEV: "DEV",
-      ADMIN: "ADMIN",
-      OPER: "OPER",
-      VISU: "VISU"
-    };
+  DEV: "DEV",
+  ADMIN: "ADMIN",
+  ASSOP: "ASSOP",
+  OPER: "OPER",
+  VISU: "VISU"
+};
 
     const nameLabel =
       session.fullName ||
@@ -42,6 +43,21 @@
         window.location.href = window.location.pathname;
       }
     };
+
+    const reportsBtn = document.getElementById("btnSidebarReports");
+const reportsLock = document.getElementById("reportsLock");
+const canViewReports = !!window.CoreAuth?.can?.("canViewReports");
+
+if (reportsBtn) {
+  reportsBtn.classList.toggle("is-locked", !canViewReports);
+  reportsBtn.disabled = !canViewReports;
+  reportsBtn.title = canViewReports ? "" : "Seu perfil não possui acesso a Relatórios.";
+}
+
+if (reportsLock) {
+  reportsLock.classList.toggle("hidden", canViewReports);
+}
+    
   }
 
   window.CoreUI = { updateTopbar };

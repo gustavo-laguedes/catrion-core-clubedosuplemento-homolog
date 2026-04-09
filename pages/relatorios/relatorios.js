@@ -2,6 +2,22 @@ window.CorePageModules = window.CorePageModules || {};
 window.CorePageModules.relatorios = function () {
   const content = document.getElementById("reportContent");
 
+  const canViewReports = !!window.CoreAuth?.can?.("canViewReports");
+
+if (!canViewReports) {
+  content.innerHTML = `
+    <div class="r-card">
+      <div class="r-head">
+        <div>
+          <div class="r-title"><span class="ico">🔒</span> Relatórios bloqueados</div>
+          <div class="r-sub">Seu perfil não possui acesso a esta área.</div>
+        </div>
+      </div>
+    </div>
+  `;
+  return;
+}
+
   // ===== EXPORT (CSV / PDF via print) =====
 function csvEscape(v){
   const s = String(v ?? "");

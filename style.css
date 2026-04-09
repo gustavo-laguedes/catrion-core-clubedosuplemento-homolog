@@ -2450,3 +2450,21 @@ body.is-login #app{
     width:100%;
   }
 }
+
+.sidebar-lock{
+  margin-left:auto;
+  font-size:13px;
+  opacity:.9;
+}
+
+.sidebar-link.is-locked{
+  opacity:.55;
+  filter:grayscale(.18);
+  cursor:not-allowed;
+}
+
+.sidebar-link.is-locked:hover{
+  background:transparent;
+  color:var(--sidebar-text);
+  transform:none;
+}

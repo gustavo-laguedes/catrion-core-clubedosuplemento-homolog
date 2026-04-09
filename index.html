@@ -41,10 +41,11 @@
     <span>Caixa</span>
   </button>
 
-  <button class="sidebar-link" type="button" data-route="relatorios">
-    <span class="sidebar-ico">📊</span>
-    <span>Relatórios</span>
-  </button>
+  <button class="sidebar-link" type="button" data-route="relatorios" id="btnSidebarReports">
+  <span class="sidebar-ico">📊</span>
+  <span>Relatórios</span>
+  <span class="sidebar-lock hidden" id="reportsLock">🔒</span>
+</button>
 </nav>
 
 <div class="sidebar-secondary">
@@ -440,10 +441,6 @@
     <div class="chat-compose">
       <input id="chatInput" type="text" placeholder="Escreva uma mensagem..." autocomplete="off" />
       <button id="btnChatSend" class="btn-primary" type="button">Enviar</button>
-    </div>
-
-    <div class="chat-foot muted">
-      Dica: Enter envia • Shift+Enter quebra linha (se quiser depois a gente evolui)
     </div>
   </div>
 </div>

@@ -50,11 +50,40 @@ if (!emailInput || !passwordInput || !btnLogin || !errorEl) {
         return;
       }
 
-      document.body.classList.remove("is-login");
+            document.body.classList.remove("is-login");
 
-      const user = window.CoreAuth?.getCurrentUser?.();
-      if (user && typeof updateUserUI === "function") {
-        updateUserUI(user);
+      let mergedUser = window.CoreAuth?.getCurrentUser?.() || null;
+
+      try {
+        if (mergedUser?.id && window.sb) {
+          const { data: profile, error } = await window.sb
+            .from("profiles")
+            .select("id, full_name, email, role, avatar_path, status")
+            .eq("id", mergedUser.id)
+            .maybeSingle();
+
+          if (!error && profile) {
+            mergedUser = {
+              ...mergedUser,
+              name: profile.full_name || mergedUser.name || mergedUser.email || "Usuário",
+              full_name: profile.full_name || mergedUser.full_name || "",
+              email: profile.email || mergedUser.email || "",
+              role: profile.role || mergedUser.role || "USER",
+              avatar_path: profile.avatar_path || "",
+              avatarUrl: profile.avatar_path || ""
+            };
+          }
+        }
+      } catch (profileErr) {
+        console.warn("[LOGIN] Não foi possível mesclar profile após login:", profileErr);
+      }
+
+      if (mergedUser && typeof updateUserUI === "function") {
+        updateUserUI(mergedUser);
+      }
+
+      if (typeof applyGlobalRoleUI === "function") {
+        applyGlobalRoleUI();
       }
 
       if (window.setActiveSidebar) {

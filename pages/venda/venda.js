@@ -10,6 +10,11 @@ window.CorePageModules.venda = function () {
   const canSaveCoupon = !!window.CoreAuth?.can?.("canSaveCoupon");
   const canDeleteCoupon = !!window.CoreAuth?.can?.("canDeleteCoupon");
 
+  const canCreateCustomer = !!window.CoreAuth?.can?.("canCreateCustomer");
+const canDeleteCustomer = !!window.CoreAuth?.can?.("canDeleteCustomer");
+const canEditCustomer = !!window.CoreAuth?.can?.("canCreateCustomer");
+
+
 
   const searchInput     = $("searchInput");
   const btnScan         = $("btnScan");
@@ -107,8 +112,8 @@ function renderCustomerManager(list){
     </div>
 
     <div class="cust-actions">
-      <button class="cust-edit" data-edit="${c.id}" title="Editar">✏️</button>
-      <button class="cust-delete" data-del="${c.id}" title="Excluir">🗑</button>
+      ${canEditCustomer ? `<button class="cust-edit" data-edit="${c.id}" title="Editar">✏️</button>` : ``}
+      ${canDeleteCustomer ? `<button class="cust-delete" data-del="${c.id}" title="Excluir">🗑</button>` : ``}
     </div>
   </div>
 `).join("");
@@ -117,21 +122,23 @@ function renderCustomerManager(list){
 
   custManageList.querySelectorAll("[data-edit]").forEach(btn => {
   btn.addEventListener("click", () => {
+    if (!canEditCustomer) {
+      alert("Você não tem permissão para editar clientes.");
+      return;
+    }
+
     const id = btn.getAttribute("data-edit");
     const c = customers.find(x => x.id === id);
     if (!c) return;
 
-    // entra em modo edição
     editingCustomerId = id;
     setCustomerFormMode("edit");
 
-    // preenche formulário
     custNewName.value  = c.name || "";
     custNewPhone.value = c.phone || "";
     custNewDoc.value   = c.doc || "";
     custNewNotes.value = c.notes || "";
 
-    // foco no nome
     setTimeout(() => custNewName.focus(), 50);
   });
 });
@@ -881,6 +888,10 @@ function closeCustomerModal(){
 
 
 async function saveNewCustomer(){
+  if (!canCreateCustomer) {
+  alert("Você não tem permissão para cadastrar ou editar clientes.");
+  return;
+}
   const name  = (custNewName.value || "").trim();
   const phone = (custNewPhone.value || "").trim();
   const doc   = (custNewDoc.value || "").trim();
@@ -971,8 +982,20 @@ if (btnAddCustomer){
   btnAddCustomer.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!canCreateCustomer) {
+      alert("Você não tem permissão para cadastrar clientes.");
+      return;
+    }
+
     await openCustomerModal();
   });
+}
+
+if (btnAddCustomer) {
+  btnAddCustomer.disabled = !canCreateCustomer;
+  btnAddCustomer.style.opacity = canCreateCustomer ? "1" : ".55";
+  btnAddCustomer.title = canCreateCustomer ? "" : "Você não tem permissão para cadastrar clientes.";
 }
 
 
@@ -1416,23 +1439,23 @@ function renderSavedCoupons(list){
   }
 
   couponSavedList.innerHTML = list.map(c => `
-    <div class="coupon-row ${c.isActive ? "" : "is-inactive"}">
-      <div class="coupon-meta">
-        <div class="line1">${c.code}</div>
-        <div class="line2">
-          ${c.kind === "percent" ? `${c.value}%` : brl(c.value)}
-          ${c.note ? ` • ${c.note}` : ""}
-          ${!c.isActive ? " • inativo" : ""}
-        </div>
-      </div>
-
-      <div class="coupon-actions">
-        <button class="coupon-apply" data-coupon-apply="${c.id}" type="button">Usar</button>
-        <button class="coupon-edit" data-coupon-edit="${c.id}" type="button">✏️</button>
-        <button class="coupon-delete" data-coupon-del="${c.id}" type="button">🗑</button>
+  <div class="coupon-row ${c.isActive ? "" : "is-inactive"}">
+    <div class="coupon-meta">
+      <div class="line1">${c.code}</div>
+      <div class="line2">
+        ${c.kind === "percent" ? `${c.value}%` : brl(c.value)}
+        ${c.note ? ` • ${c.note}` : ""}
+        ${!c.isActive ? " • inativo" : ""}
       </div>
     </div>
-  `).join("");
+
+    <div class="coupon-actions">
+      <button class="coupon-apply" data-coupon-apply="${c.id}" type="button">Usar</button>
+      ${canSaveCoupon ? `<button class="coupon-edit" data-coupon-edit="${c.id}" type="button">✏️</button>` : ``}
+      ${canDeleteCoupon ? `<button class="coupon-delete" data-coupon-del="${c.id}" type="button">🗑</button>` : ``}
+    </div>
+  </div>
+`).join("");
 
   couponSavedList.querySelectorAll("[data-coupon-apply]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -2443,6 +2466,12 @@ btnCouponSave?.addEventListener("click", async () => {
     alert("Não foi possível salvar o cupom.");
   }
 });
+
+if (btnCouponSave) {
+  btnCouponSave.disabled = !canSaveCoupon;
+  btnCouponSave.style.opacity = canSaveCoupon ? "1" : ".55";
+  btnCouponSave.title = canSaveCoupon ? "" : "Você não tem permissão para salvar cupons.";
+}
 
   discountModal?.addEventListener("click", (e) => { if (e.target === discountModal) closeDiscount(); });
 

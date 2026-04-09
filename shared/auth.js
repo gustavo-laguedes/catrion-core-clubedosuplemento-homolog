@@ -114,47 +114,49 @@
   }
 
   async function bootstrap() {
-    await window.CatrionTenant?.ensureActiveTenant?.();
+  await window.CatrionTenant?.ensureActiveTenant?.();
 
-    const cached = getCachedSession();
-    if (cached?.userId) {
-      return { ok: true, session: cached };
-    }
+  const sb = requireSb();
+  const { data, error } = await sb.auth.getSession();
 
-    const sb = requireSb();
-    const { data, error } = await sb.auth.getSession();
-
-    if (error) {
-      clearCachedSession();
-      return { ok: false, message: "Falha ao ler sessão do Supabase.", error };
-    }
-
-    const supaSession = data?.session || null;
-    const user = supaSession?.user || null;
-
-    if (!user?.id) {
-      clearCachedSession();
-      return { ok: false, message: "Sem sessão." };
-    }
-
-    const profile = await fetchProfileForUser(user.id);
-
-    if (!profile) {
-      clearCachedSession();
-      return { ok: false, message: "Perfil do usuário não encontrado." };
-    }
-
-    if (profile.status !== "active") {
-      clearCachedSession();
-      await sb.auth.signOut();
-      return { ok: false, message: "Usuário bloqueado." };
-    }
-
-    const session = buildSessionFromAuthAndProfile(user, profile);
-    setCachedSession(session);
-
-    return { ok: true, session };
+  if (error) {
+    clearCachedSession();
+    return { ok: false, message: "Falha ao ler sessão do Supabase.", error };
   }
+
+  const supaSession = data?.session || null;
+  const user = supaSession?.user || null;
+
+  if (!user?.id) {
+    clearCachedSession();
+    return { ok: false, message: "Sem sessão." };
+  }
+
+  const cached = getCachedSession();
+
+  // Se o cache for de outro usuário, ignora
+  if (cached?.userId && cached.userId !== user.id) {
+    clearCachedSession();
+  }
+
+  const profile = await fetchProfileForUser(user.id);
+
+  if (!profile) {
+    clearCachedSession();
+    return { ok: false, message: "Perfil do usuário não encontrado." };
+  }
+
+  if (profile.status !== "active") {
+    clearCachedSession();
+    await sb.auth.signOut();
+    return { ok: false, message: "Usuário bloqueado." };
+  }
+
+  const session = buildSessionFromAuthAndProfile(user, profile);
+  setCachedSession(session);
+
+  return { ok: true, session };
+}
 
   async function login({ email, password }) {
     const sb = requireSb();
@@ -255,146 +257,156 @@
   }
 
     const rolePermissions = {
-    DEV: {
-      canManageUsers: true,
-      canEditUsers: true,
-      canDeleteUsers: true,
-      canBlockUsers: true,
-      canSendFirstAccess: true,
+  DEV: {
+    canManageUsers: true,
+    canEditUsers: true,
+    canDeleteUsers: true,
+    canBlockUsers: true,
+    canSendFirstAccess: true,
 
-      canViewReports: true,
-      canExportReports: true,
+    canViewReports: true,
+    canExportReports: true,
 
-      canCreateProducts: true,
-      canEditProducts: true,
-      canDeleteProducts: true,
-      canMoveStock: true,
-      canViewProductCosts: true,
+    canCreateProducts: true,
+    canEditProducts: true,
+    canDeleteProducts: true,
+    canMoveStock: true,
+    canViewProductCosts: true,
 
-      canOpenCash: true,
-      canCloseCash: true,
-      canSupplyCash: true,
-      canWithdrawCash: true,
-      canCancelCashEvent: true,
-      canViewCashProfit: true,
+    canOpenCash: true,
+    canCloseCash: true,
+    canSupplyCash: true,
+    canWithdrawCash: true,
+    canCancelCashEvent: true,
+    canViewCashProfit: true,
 
-      canCompleteSale: true,
-      canSaveCoupon: true,
-      canDeleteCoupon: true
-    },
+    canCompleteSale: true,
+    canSaveCoupon: true,
+    canDeleteCoupon: true,
+    canCreateCustomer: true,
+    canDeleteCustomer: true
+  },
 
-    ADMIN: {
-      canManageUsers: true,
-      canEditUsers: true,
-      canDeleteUsers: true,
-      canBlockUsers: true,
-      canSendFirstAccess: true,
+  ADMIN: {
+    canManageUsers: true,
+    canEditUsers: true,
+    canDeleteUsers: true,
+    canBlockUsers: true,
+    canSendFirstAccess: true,
 
-      canViewReports: true,
-      canExportReports: true,
+    canViewReports: true,
+    canExportReports: true,
 
-      canCreateProducts: true,
-      canEditProducts: true,
-      canDeleteProducts: true,
-      canMoveStock: true,
-      canViewProductCosts: true,
+    canCreateProducts: true,
+    canEditProducts: true,
+    canDeleteProducts: true,
+    canMoveStock: true,
+    canViewProductCosts: true,
 
-      canOpenCash: true,
-      canCloseCash: true,
-      canSupplyCash: true,
-      canWithdrawCash: true,
-      canCancelCashEvent: true,
-      canViewCashProfit: true,
+    canOpenCash: true,
+    canCloseCash: true,
+    canSupplyCash: true,
+    canWithdrawCash: true,
+    canCancelCashEvent: true,
+    canViewCashProfit: true,
 
-      canCompleteSale: true,
-      canSaveCoupon: true,
-      canDeleteCoupon: true
-    },
+    canCompleteSale: true,
+    canSaveCoupon: true,
+    canDeleteCoupon: true,
+    canCreateCustomer: true,
+    canDeleteCustomer: true
+  },
 
-    ASSOP: {
-      canManageUsers: false,
-      canEditUsers: false,
-      canDeleteUsers: false,
-      canBlockUsers: false,
-      canSendFirstAccess: false,
+  ASSOP: {
+    canManageUsers: false,
+    canEditUsers: false,
+    canDeleteUsers: false,
+    canBlockUsers: false,
+    canSendFirstAccess: false,
 
-      canViewReports: false,
-      canExportReports: false,
+    canViewReports: false,
+    canExportReports: false,
 
-      canCreateProducts: true,
-      canEditProducts: true,
-      canDeleteProducts: true,
-      canMoveStock: true,
-      canViewProductCosts: true,
+    canCreateProducts: true,
+    canEditProducts: true,
+    canDeleteProducts: true,
+    canMoveStock: true,
+    canViewProductCosts: true,
 
-      canOpenCash: true,
-      canCloseCash: true,
-      canSupplyCash: true,
-      canWithdrawCash: true,
-      canCancelCashEvent: true,
-      canViewCashProfit: true,
+    canOpenCash: true,
+    canCloseCash: true,
+    canSupplyCash: true,
+    canWithdrawCash: true,
+    canCancelCashEvent: true,
+    canViewCashProfit: false,
 
-      canCompleteSale: true,
-      canSaveCoupon: true,
-      canDeleteCoupon: true
-    },
+    canCompleteSale: true,
+    canSaveCoupon: true,
+    canDeleteCoupon: true,
+    canCreateCustomer: true,
+    canDeleteCustomer: true
+  },
 
-    OPER: {
-  canManageUsers: false,
-  canEditUsers: false,
-  canDeleteUsers: false,
-  canBlockUsers: false,
-  canSendFirstAccess: false,
+  OPER: {
+    canManageUsers: false,
+    canEditUsers: false,
+    canDeleteUsers: false,
+    canBlockUsers: false,
+    canSendFirstAccess: false,
 
-  canViewReports: false,
-  canExportReports: false,
+    canViewReports: false,
+    canExportReports: false,
 
-  canCreateProducts: true,
-  canEditProducts: false,
-  canDeleteProducts: false,
-  canMoveStock: false,
-  canViewProductCosts: false,
+    canCreateProducts: true,
+    canEditProducts: false,
+    canDeleteProducts: false,
+    canMoveStock: false,
+    canViewProductCosts: false,
 
-  canOpenCash: true,
-  canCloseCash: true,
-  canSupplyCash: false,
-  canWithdrawCash: false,
-  canCancelCashEvent: false,
-  canViewCashProfit: false,
+    canOpenCash: true,
+    canCloseCash: true,
+    canSupplyCash: false,
+    canWithdrawCash: false,
+    canCancelCashEvent: false,
+    canViewCashProfit: false,
 
-  canCompleteSale: true,
-  canSaveCoupon: true,
-  canDeleteCoupon: false
-},
+    canCompleteSale: true,
+    canSaveCoupon: true,
+    canDeleteCoupon: false,
+    canCreateCustomer: true,
+    canDeleteCustomer: false
+  },
 
-    VISU: {
-      canManageUsers: false,
-      canEditUsers: false,
-      canDeleteUsers: false,
-      canBlockUsers: false,
-      canSendFirstAccess: false,
+  VISU: {
+    canManageUsers: false,
+    canEditUsers: false,
+    canDeleteUsers: false,
+    canBlockUsers: false,
+    canSendFirstAccess: false,
 
-      canViewReports: true,
-      canExportReports: true,
+    canViewReports: true,
+    canExportReports: true,
 
-      canCreateProducts: false,
-      canEditProducts: false,
-      canDeleteProducts: false,
-      canMoveStock: false,
-      canViewProductCosts: false,
+    canCreateProducts: false,
+    canEditProducts: false,
+    canDeleteProducts: false,
+    canMoveStock: false,
+    canViewProductCosts: true,
 
-      canOpenCash: false,
-      canCloseCash: false,
-      canSupplyCash: false,
-      canWithdrawCash: false,
-      canCancelCashEvent: false,
-      canViewCashProfit: false,
+    canOpenCash: false,
+    canCloseCash: false,
+    canSupplyCash: false,
+    canWithdrawCash: false,
+    canCancelCashEvent: false,
+    canViewCashProfit: true,
 
-      canCompleteSale: false,
-      canSaveCoupon: false,
-      canDeleteCoupon: false
-    }
-  };
+    canCompleteSale: false,
+    canSaveCoupon: false,
+    canDeleteCoupon: false,
+    canCreateCustomer: false,
+    canDeleteCustomer: false
+  }
+};
 
   function getPermissions(role) {
     const normalized = normalizeRole(role);
