@@ -90,7 +90,6 @@ const $adminPasswordActions = el("adminPasswordActions");
   const $saleViewTitle = el("saleViewTitle");
 
   let adminMode = false;
-  const ADMIN_PASSWORD = "adminconfig00"; // ✅ senha do admin
 
   const moneyOrMask = (v) =>
   canViewCashProfit
@@ -952,15 +951,39 @@ $adminDismiss?.addEventListener("click", () => {
   render();
 }
 
-$adminConfirm.addEventListener("click", () => {
+$adminConfirm.addEventListener("click", async () => {
   const pass = ($adminPass.value || "").trim();
 
-  if (pass !== ADMIN_PASSWORD) {
-    alert("Senha incorreta.");
+  if (!pass) {
+    if ($adminHint) {
+      $adminHint.textContent = "Digite a senha administrativa.";
+      $adminHint.classList.remove("hidden");
+    }
     return;
   }
 
-  showAdminWarning();
+  try {
+    if (!window.AdminApi?.verifyAdminPassword) {
+      throw new Error("Validador administrativo não carregado.");
+    }
+
+    await window.AdminApi.verifyAdminPassword({ password: pass });
+
+    if ($adminHint) {
+      $adminHint.textContent = "";
+    }
+
+    showAdminWarning();
+  } catch (err) {
+    console.error("[CAIXA] erro ao validar senha admin:", err);
+
+    if ($adminHint) {
+      $adminHint.textContent = err?.message || "Senha incorreta.";
+      $adminHint.classList.remove("hidden");
+    } else {
+      alert(err?.message || "Senha incorreta.");
+    }
+  }
 });
 
 

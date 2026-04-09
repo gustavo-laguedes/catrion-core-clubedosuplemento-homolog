@@ -1,25 +1,34 @@
 (function () {
   const BASE_HEADERS = {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "apikey": window.ENV.SUPABASE_ANON_KEY
   };
 
-  function getAdminHeaders() {
-    const isAdminAuthorized = localStorage.getItem("core_admin_authorized") === "true";
+  async function getAdminHeaders() {
+    if (!window.sb?.auth?.getSession) {
+      throw new Error("Sessão do Supabase não disponível.");
+    }
 
-    if (!isAdminAuthorized) {
-      throw new Error("Área administrativa não autorizada.");
+    const { data, error } = await window.sb.auth.getSession();
+
+    if (error) {
+      throw new Error("Falha ao ler sessão do usuário.");
+    }
+
+    const accessToken = data?.session?.access_token;
+
+    if (!accessToken) {
+      throw new Error("Usuário não autenticado.");
     }
 
     return {
       ...BASE_HEADERS,
-      "x-core-admin-auth": "true",
-      "apikey": window.ENV.SUPABASE_ANON_KEY,
-      "Authorization": `Bearer ${window.ENV.SUPABASE_ANON_KEY}`
+      Authorization: `Bearer ${accessToken}`
     };
   }
 
   async function callFn(name, body = {}) {
-    const headers = getAdminHeaders();
+    const headers = await getAdminHeaders();
 
     const response = await fetch(
       `${window.ENV.SUPABASE_URL}/functions/v1/${name}`,
@@ -37,6 +46,10 @@
     }
 
     return payload;
+  }
+
+  async function verifyAdminPassword({ password }) {
+    return callFn("admin-verify-password", { password });
   }
 
   async function listUsers() {
@@ -76,6 +89,7 @@
   }
 
   window.AdminApi = {
+    verifyAdminPassword,
     listUsers,
     createUser,
     updateUser,

@@ -200,6 +200,9 @@ let currentProfileAvatarUrl = "";
 
 const configMachines = document.getElementById("machinesSection");
 
+const btnSidebarAccess = document.getElementById("btnSidebarAccess");
+const btnSidebarRates = document.getElementById("btnSidebarRates");
+
 // machines
 const machineForm = document.getElementById("machineForm");
 const btnNewMachine = document.getElementById("btnNewMachine");
@@ -221,23 +224,23 @@ function isAdminUnlocked() {
 }
 
 function canAdminManageUsers() {
-  return isAdminUnlocked() || can("canManageUsers");
+  return can("canManageUsers");
 }
 
 function canAdminEditUsers() {
-  return isAdminUnlocked() || can("canEditUsers");
+  return can("canEditUsers");
 }
 
 function canAdminBlockUsers() {
-  return isAdminUnlocked() || can("canBlockUsers");
+  return can("canBlockUsers");
 }
 
 function canAdminDeleteUsers() {
-  return isAdminUnlocked() || can("canDeleteUsers");
+  return can("canDeleteUsers");
 }
 
 function canAdminSendFirstAccess() {
-  return isAdminUnlocked() || can("canSendFirstAccess");
+  return can("canSendFirstAccess");
 }
 
 function isDevOrAdmin() {
@@ -246,9 +249,14 @@ function isDevOrAdmin() {
 }
 
 function applyGlobalRoleUI() {
-  const configBtn = document.querySelector('.sidebar-link-secondary');
-  if (configBtn) {
-    configBtn.style.display = isDevOrAdmin() ? "" : "none";
+  const isPrivileged = isDevOrAdmin();
+
+  if (btnSidebarAccess) {
+    btnSidebarAccess.style.display = isPrivileged ? "" : "none";
+  }
+
+  if (btnSidebarRates) {
+    btnSidebarRates.style.display = isPrivileged ? "" : "none";
   }
 
   if (btnAdminNewUser) {
@@ -937,16 +945,32 @@ window.APPayablesStore = (function () {
    ADMIN / CONFIGURAÇÕES
 ========================= */
 
-const ADMIN_PASSWORD = localStorage.getItem("core_admin_master_password") || "adminconfig00";
-const DEV_PROTECTED_EMAIL = "gustavo.laguedes@gmail.com";
 let pendingAdminTarget = "users";
 
 /* ---------- AUTH ---------- */
 function openAdminAuth(target = "users") {
   pendingAdminTarget = target === "system" ? "system" : "users";
 
+  const modalTitle = adminAuthOverlay?.querySelector("h3");
+  const modalSubtitle = adminAuthOverlay?.querySelector(".muted");
+
+  if (modalTitle) {
+    modalTitle.textContent =
+      pendingAdminTarget === "system"
+        ? "🔒 Controle de Taxas"
+        : "🔒 Gestão de Acessos";
+  }
+
+  if (modalSubtitle) {
+    modalSubtitle.textContent =
+      pendingAdminTarget === "system"
+        ? "Digite a senha do administrador para acessar o controle de taxas"
+        : "Digite a senha do administrador para acessar a gestão de acessos";
+  }
+
   adminAuthOverlay.classList.remove("core-hidden");
   adminPasswordInput.value = "";
+  adminAuthError.textContent = "Senha incorreta.";
   adminAuthError.classList.add("hidden");
   adminPasswordInput.focus();
 }
@@ -955,29 +979,48 @@ function closeAdminAuth() {
   adminAuthOverlay.classList.add("core-hidden");
 }
 
-function confirmAdminAuth() {
-  if (adminPasswordInput.value !== ADMIN_PASSWORD) {
+async function confirmAdminAuth() {
+  const password = String(adminPasswordInput?.value || "").trim();
+
+  if (!password) {
+    adminAuthError.textContent = "Digite a senha administrativa.";
     adminAuthError.classList.remove("hidden");
     return;
   }
 
-   adminAuthError.classList.add("hidden");
-  localStorage.setItem("core_admin_authorized", "true");
+  try {
+    adminAuthError.classList.add("hidden");
 
-  applyGlobalRoleUI();
-  closeAdminAuth();
+    if (!window.AdminApi?.verifyAdminPassword) {
+      throw new Error("Validador administrativo não carregado.");
+    }
 
-  if (pendingAdminTarget === "system") {
-    openSystemConfig();
-    return;
+    await window.AdminApi.verifyAdminPassword({ password });
+
+    localStorage.setItem("core_admin_authorized", "true");
+
+    applyGlobalRoleUI();
+    closeAdminAuth();
+
+    if (pendingAdminTarget === "system") {
+      openSystemConfig();
+      return;
+    }
+
+    openAdminUsers();
+  } catch (err) {
+    console.error("[ADMIN AUTH] erro ao validar senha:", err);
+    adminAuthError.textContent = err?.message || "Senha inválida.";
+    adminAuthError.classList.remove("hidden");
   }
-
-  openAdminUsers();
 }
 
 if (adminPasswordInput) {
-  adminPasswordInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") confirmAdminAuth();
+  adminPasswordInput.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await confirmAdminAuth();
+    }
   });
 }
 
@@ -987,6 +1030,14 @@ async function openSystemConfig() {
   switchConfigTab("machines");
   await loadMachines();
   renderMachines();
+
+  if (machineForm) {
+    machineForm.classList.add("hidden");
+  }
+
+  if (typeof clearMachineForm === "function") {
+    clearMachineForm();
+  }
 }
 
 function closeSystemConfig() {
@@ -1523,13 +1574,23 @@ function switchConfigTab(tab) {
     configMachines.classList.toggle("hidden", tab !== "machines");
   }
 
-  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
   const btn = document.querySelector(`.tab[data-tab="${tab}"]`);
   if (btn) btn.classList.add("active");
 
-  if (machineForm) machineForm.classList.add("hidden");
-editingMachineId = null;
-if (saveMachineBtn) saveMachineBtn.textContent = "Salvar";
+  if (machineForm) {
+    machineForm.classList.add("hidden");
+  }
+
+  if (typeof clearMachineForm === "function") {
+    clearMachineForm();
+  }
+
+  editingMachineId = null;
+
+  if (saveMachineBtn) {
+    saveMachineBtn.textContent = "Salvar";
+  }
 }
 
 /* =========================
@@ -1602,13 +1663,20 @@ function clearMachineForm(){
   if (saveMachineBtn) saveMachineBtn.textContent = "Salvar";
 }
 
-function showMachineForm(){
-  machineForm.classList.toggle("hidden");
-  if (!machineForm.classList.contains("hidden")) {
-    machineNameInput.focus();
-  } else {
+function showMachineForm() {
+  if (!machineForm) return;
+
+  const isHidden = machineForm.classList.contains("hidden");
+
+  if (isHidden) {
     clearMachineForm();
+    machineForm.classList.remove("hidden");
+    machineNameInput?.focus();
+    return;
   }
+
+  machineForm.classList.add("hidden");
+  clearMachineForm();
 }
 
 async function loadMachines(){
@@ -1832,8 +1900,16 @@ function isAdminSession(){
   return role === "ADMIN" || role === "DEV";
 }
 
-function validateAdminPassword(pass){
-  return String(pass || "").trim() === String(ADMIN_PASSWORD || "").trim();
+async function validateAdminPassword(pass) {
+  if (!window.AdminApi?.verifyAdminPassword) {
+    throw new Error("Validador administrativo não carregado.");
+  }
+
+  const result = await window.AdminApi.verifyAdminPassword({
+    password: String(pass || "").trim()
+  });
+
+  return !!result?.ok;
 }
 
 function chatClearAll(){
@@ -1859,29 +1935,28 @@ chatClearOverlay?.addEventListener("click", (e) => {
   if (e.target === chatClearOverlay) closeChatClearModal();
 });
 
-btnChatClearConfirm?.addEventListener("click", () => {
+btnChatClearConfirm?.addEventListener("click", async () => {
   const pass = String(chatClearPass?.value || "").trim();
 
-  if (!pass){
+  if (!pass) {
     chatClearError.textContent = "Digite a senha do ADMIN.";
     chatClearError.classList.remove("hidden");
     chatClearPass?.focus();
     return;
   }
 
-  if (!validateAdminPassword(pass)){
-    chatClearError.textContent = "Senha inválida.";
+  try {
+    await validateAdminPassword(pass);
+
+    chatClearError.classList.add("hidden");
+    chatClearAll();
+    closeChatClearModal();
+  } catch (err) {
+    chatClearError.textContent = err?.message || "Senha inválida.";
     chatClearError.classList.remove("hidden");
     chatClearPass?.select();
     chatClearPass?.focus();
-    return;
   }
-
-  // ✅ limpa de verdade
-  chatClearAll();
-
-  // fecha modal
-  closeChatClearModal();
 });
 
 chatClearPass?.addEventListener("keydown", (e) => {

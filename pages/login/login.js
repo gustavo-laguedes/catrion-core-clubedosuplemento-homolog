@@ -7,12 +7,12 @@ window.CorePageModules.login = function () {
   const passwordInput = document.getElementById("loginPassword");
   const btnLogin = document.getElementById("btnLogin");
   const btnAdmin = document.getElementById("btnAdminArea");
-  const errorEl = document.getElementById("loginError");
+const errorEl = document.getElementById("loginError");
 
-  if (!emailInput || !passwordInput || !btnLogin || !btnAdmin || !errorEl) {
-    console.error("[LOGIN] Elementos da tela de login não encontrados.");
-    return;
-  }
+if (!emailInput || !passwordInput || !btnLogin || !errorEl) {
+  console.error("[LOGIN] Elementos da tela de login não encontrados.");
+  return;
+}
 
   function setError(message = "") {
     if (!message) {
@@ -92,16 +92,12 @@ window.CorePageModules.login = function () {
     }
   });
 
-  btnAdmin.onclick = () => {
-    setError("");
-
-    if (typeof openAdminAuth === "function") {
-  openAdminAuth("users");
-  return;
-}
-
-    console.warn("[LOGIN] openAdminAuth não está disponível.");
-  };
+    if (btnAdmin) {
+    btnAdmin.onclick = () => {
+      setError("");
+      console.warn("[LOGIN] Acesso administrativo antes do login foi desativado.");
+    };
+  }
 
   setTimeout(() => {
     emailInput.focus();

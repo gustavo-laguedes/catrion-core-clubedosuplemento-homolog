@@ -48,9 +48,24 @@
 </nav>
 
 <div class="sidebar-secondary">
-  <button class="sidebar-link sidebar-link-secondary" type="button" onclick="openAdminAuth('system')">
-    <span class="sidebar-ico">⚙️</span>
-    <span>Configurações</span>
+  <button
+    id="btnSidebarAccess"
+    class="sidebar-link sidebar-link-secondary"
+    type="button"
+    onclick="openAdminAuth('users')"
+  >
+    <span class="sidebar-ico">👤</span>
+    <span>Gestão de Acessos</span>
+  </button>
+
+  <button
+    id="btnSidebarRates"
+    class="sidebar-link sidebar-link-secondary"
+    type="button"
+    onclick="openAdminAuth('system')"
+  >
+    <span class="sidebar-ico">💳</span>
+    <span>Controle de Taxas</span>
   </button>
 </div>
 
@@ -156,8 +171,8 @@
   <div class="core-modal admin-users-modal">
     <div class="admin-users-head">
       <div>
-        <div class="admin-users-title">👤 Área administrativa</div>
-        <div class="admin-users-subtitle">Gestão de usuários e acessos do sistema</div>
+        <div class="admin-users-title">👤 Gestão de Acessos</div>
+<div class="admin-users-subtitle">Gerencie usuários, papéis e acessos do sistema</div>
       </div>
 
       <div class="admin-users-top-actions">
@@ -269,12 +284,12 @@
 
 
     <div class="config-header">
-      <h3>⚙️ Configurações do Sistema</h3>
+      <h3>💳 Controle de Taxas</h3>
       <button class="icon-btn" onclick="closeSystemConfig()">✕</button>
     </div>
 
     <div class="config-tabs">
-  <button class="tab active" data-tab="machines" onclick="switchConfigTab('machines')">Maquininhas</button>
+  <button class="tab active" data-tab="machines" onclick="switchConfigTab('machines')">Maquininhas e taxas</button>
 </div>
 
 
