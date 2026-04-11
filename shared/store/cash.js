@@ -78,6 +78,22 @@
   });
 }
 
+  async function getLatestSession() {
+  assertClient();
+
+  return window.CatrionTenantContext.withTenant(async (tenantId) => {
+    const { data: rows, error } = await window.sb
+      .from("cash_sessions")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .order("opened_at", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    return (rows && rows[0]) ? rows[0] : null;
+  });
+}
+
   // ---------- CASH EVENTS ----------
   async function addEvent({
   sessionId,
@@ -130,11 +146,12 @@
     return rows || [];
   });
 }
-  window.CashStore = {
-    openSession,
-    closeSession,
-    getLatestOpenSession,
-    addEvent,
-    listEvents
-  };
+ window.CashStore = {
+  openSession,
+  closeSession,
+  getLatestOpenSession,
+  getLatestSession,
+  addEvent,
+  listEvents
+};
 })();
